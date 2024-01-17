@@ -22,7 +22,7 @@ ASSIGN
 
   next(state) := case
     state = REQUESTED & assigned : TALKING;
-    state = REQUESTED & wait = max_wait : ANGRY;
+    state = REQUESTED & wait = max_wait & !next(assigned) : ANGRY;
     state = TALKING & talking = talking_amount : IDLE;
     state = IDLE : { IDLE, REQUESTED };
     TRUE : state;
@@ -64,23 +64,32 @@ ASSIGN
 DEFINE
   max_busy := 5; -- R
   busy_amount := 3; -- L
-  relax_amount := 1;
+  relax_amount := 2;
 
 MODULE restaurant
 VAR
   c1 : client(1);
+  c2 : client(2);
   s1 : server(1);
 ASSIGN
   next(c1.assigned) := case
-    c1.state = REQUESTED & s1.state = IDLE : TRUE;
+    c1.state = REQUESTED & s1.state = IDLE & next(s1.state) = IDLE : TRUE;
     c1.state = TALKING & c1.assigned : FALSE;
     TRUE : c1.assigned;
   esac;
+  next(c2.assigned) := case
+    c2.state = REQUESTED & s1.state = IDLE & next(s1.state) = IDLE : TRUE;
+    c2.state = TALKING & c2.assigned : FALSE;
+    TRUE : c2.assigned;
+  esac;
+
   next(s1.assigned) := case
     s1.state = IDLE & c1.state = REQUESTED : TRUE;
+    s1.state = IDLE & c2.state = REQUESTED : TRUE;
     s1.state = BUSY & s1.assigned : FALSE;
     TRUE: s1.assigned;
   esac;
+
 DEFINE
 
 MODULE main
