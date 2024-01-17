@@ -1,0 +1,90 @@
+MODULE client (i)
+VAR
+  state : { IDLE, REQUESTED, TALKING, ANGRY };
+  wait : 0..max_wait;
+  talking : 0..talking_amount;
+  assigned : boolean;
+ASSIGN
+  init(state) := IDLE;
+  init(wait) := 0;
+  init(assigned) := FALSE;
+  init(talking) := 0;
+
+  next(wait) := case
+    state = REQUESTED & wait < max_wait : wait + 1;
+    TRUE : 0;
+  esac;
+
+  next(talking) := case
+    state = TALKING & talking < talking_amount : talking + 1;
+    TRUE : 0;
+  esac;
+
+  next(state) := case
+    state = REQUESTED & assigned : TALKING;
+    state = REQUESTED & wait = max_wait : ANGRY;
+    state = TALKING & talking = talking_amount : IDLE;
+    state = IDLE : { IDLE, REQUESTED };
+    TRUE : state;
+  esac;
+DEFINE
+  max_wait := 5; -- K
+  talking_amount := 3; -- L
+
+MODULE server (i)
+VAR
+  state : { IDLE, BUSY, SICK };
+  busy : 0..max_busy;
+  relax : 0..relax_amount;
+  assigned : boolean;
+ASSIGN
+  init(state) := IDLE;
+  init(busy) := 0;
+  init(assigned) := FALSE;
+  init(relax) := 0;
+
+  next(busy) := case
+    state = BUSY & busy < max_busy : busy + 1;
+    state = IDLE & relax = relax_amount : 0;
+    TRUE : busy;
+  esac;
+
+  next(state) := case
+    state = IDLE & assigned : BUSY;
+    state = BUSY & busy = busy_amount : IDLE;
+    state = BUSY & busy = max_busy : SICK;
+    TRUE : state;
+  esac;
+
+  next(relax) := case
+    state = IDLE & relax < relax_amount : relax + 1;
+    state = BUSY : 0;
+    TRUE : relax;
+  esac;
+DEFINE
+  max_busy := 5; -- R
+  busy_amount := 3; -- L
+  relax_amount := 1;
+
+MODULE restaurant
+VAR
+  c1 : client(1);
+  s1 : server(1);
+ASSIGN
+  next(c1.assigned) := case
+    c1.state = REQUESTED & s1.state = IDLE : TRUE;
+    c1.state = TALKING & c1.assigned : FALSE;
+    TRUE : c1.assigned;
+  esac;
+  next(s1.assigned) := case
+    s1.state = IDLE & c1.state = REQUESTED : TRUE;
+    s1.state = BUSY & s1.assigned : FALSE;
+    TRUE: s1.assigned;
+  esac;
+DEFINE
+
+MODULE main
+VAR
+  r : restaurant;
+
+  LTLSPEC G (r.c1.state != ANGRY);
