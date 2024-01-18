@@ -3,11 +3,11 @@ VAR
   state : { IDLE, REQUESTED, TALKING, ANGRY };
   wait : 0..max_wait;
   talking : 0..talking_amount;
-  assigned : boolean;
+  assigned_to : 0..10;
 ASSIGN
   init(state) := IDLE;
   init(wait) := 0;
-  init(assigned) := FALSE;
+  init(assigned_to) := 0;
   init(talking) := 0;
 
   next(wait) := case
@@ -21,8 +21,8 @@ ASSIGN
   esac;
 
   next(state) := case
-    state = REQUESTED & assigned : TALKING;
-    state = REQUESTED & wait = max_wait & !next(assigned) : ANGRY;
+    state = REQUESTED & assigned_to != 0 : TALKING;
+    state = REQUESTED & wait = max_wait & next(assigned_to) = 0 : ANGRY;
     state = TALKING & talking = talking_amount : IDLE;
     state = IDLE : { IDLE, REQUESTED };
     TRUE : state;
@@ -36,11 +36,11 @@ VAR
   state : { IDLE, BUSY, SICK };
   busy : 0..max_busy;
   relax : 0..relax_amount;
-  assigned : boolean;
+  assigned_to : 0..10;
 ASSIGN
   init(state) := IDLE;
   init(busy) := 0;
-  init(assigned) := FALSE;
+  init(assigned_to) := 0;
   init(relax) := 0;
 
   next(busy) := case
@@ -50,7 +50,7 @@ ASSIGN
   esac;
 
   next(state) := case
-    state = IDLE & assigned : BUSY;
+    state = IDLE & assigned_to != 0 : BUSY;
     state = BUSY & busy = busy_amount : IDLE;
     state = BUSY & busy = max_busy : SICK;
     TRUE : state;
@@ -71,23 +71,32 @@ VAR
   c1 : client(1);
   c2 : client(2);
   s1 : server(1);
+  s2 : server(2);
 ASSIGN
-  next(c1.assigned) := case
-    c1.state = REQUESTED & s1.state = IDLE & next(s1.state) = IDLE : TRUE;
-    c1.state = TALKING & c1.assigned : FALSE;
-    TRUE : c1.assigned;
+  next(c1.assigned_to) := case
+    c1.state = REQUESTED & s1.state = IDLE : s1.i;
+    c1.state = REQUESTED & s2.state = IDLE : s2.i;
+    c1.state = TALKING & c1.assigned_to != 0 : 0;
+    TRUE : c1.assigned_to;
   esac;
-  next(c2.assigned) := case
-    c2.state = REQUESTED & s1.state = IDLE & next(s1.state) = IDLE : TRUE;
-    c2.state = TALKING & c2.assigned : FALSE;
-    TRUE : c2.assigned;
+  next(c2.assigned_to) := case
+    c2.state = REQUESTED & s1.state = IDLE & c1.state != REQUESTED : s1.i;
+    c2.state = REQUESTED & s2.state = IDLE & c1.state != REQUESTED : s2.i;
+    c2.state = TALKING & c2.assigned_to != 0 : 0;
+    TRUE : c2.assigned_to;
   esac;
 
-  next(s1.assigned) := case
-    s1.state = IDLE & c1.state = REQUESTED : TRUE;
-    s1.state = IDLE & c2.state = REQUESTED : TRUE;
-    s1.state = BUSY & s1.assigned : FALSE;
-    TRUE: s1.assigned;
+  next(s1.assigned_to) := case
+    s1.state = IDLE & c1.state = REQUESTED & next(c1.assigned_to) = s1.i : c1.i;
+    s1.state = IDLE & c2.state = REQUESTED & next(c2.assigned_to) = s1.i : c2.i;
+    s1.state = BUSY & s1.assigned_to != 0 : 0;
+    TRUE : s1.assigned_to;
+  esac;
+  next(s2.assigned_to) := case
+    s2.state = IDLE & c1.state = REQUESTED & next(c1.assigned_to) = s2.i : c1.i;
+    s2.state = IDLE & c2.state = REQUESTED & next(c2.assigned_to) = s2.i : c2.i;
+    s2.state = BUSY & s2.assigned_to != 0 : 0;
+    TRUE : s2.assigned_to;
   esac;
 
 DEFINE
