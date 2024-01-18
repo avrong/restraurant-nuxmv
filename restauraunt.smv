@@ -70,33 +70,53 @@ MODULE restaurant
 VAR
   c1 : client(1);
   c2 : client(2);
+  c3 : client(3);
   s1 : server(1);
   s2 : server(2);
+  s3 : server(3);
 ASSIGN
   next(c1.assigned_to) := case
-    c1.state = REQUESTED & s1.state = IDLE : s1.i;
-    c1.state = REQUESTED & s2.state = IDLE : s2.i;
+    c1.state = REQUESTED & s1.state = IDLE & c2.state != REQUESTED & c3.state != REQUESTED : s1.i;
+    c1.state = REQUESTED & s2.state = IDLE & c2.state != REQUESTED & c3.state != REQUESTED : s2.i;
+    c1.state = REQUESTED & s3.state = IDLE & c2.state != REQUESTED & c3.state != REQUESTED : s3.i;
     c1.state = TALKING & c1.assigned_to != 0 : 0;
     TRUE : c1.assigned_to;
   esac;
   next(c2.assigned_to) := case
-    c2.state = REQUESTED & s1.state = IDLE & c1.state != REQUESTED : s1.i;
-    c2.state = REQUESTED & s2.state = IDLE & c1.state != REQUESTED : s2.i;
+    c2.state = REQUESTED & s1.state = IDLE & c1.state != REQUESTED & c3.state != REQUESTED : s1.i;
+    c2.state = REQUESTED & s2.state = IDLE & c1.state != REQUESTED & c3.state != REQUESTED : s2.i;
+    c3.state = REQUESTED & s3.state = IDLE & c1.state != REQUESTED & c3.state != REQUESTED : s3.i;
     c2.state = TALKING & c2.assigned_to != 0 : 0;
     TRUE : c2.assigned_to;
+  esac;
+  next(c3.assigned_to) := case
+    c3.state = REQUESTED & s1.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED: s1.i;
+    c3.state = REQUESTED & s2.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED: s2.i;
+    c3.state = REQUESTED & s3.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED: s3.i;
+    c3.state = TALKING & c3.assigned_to != 0 : 0;
+    TRUE : c3.assigned_to;
   esac;
 
   next(s1.assigned_to) := case
     s1.state = IDLE & c1.state = REQUESTED & next(c1.assigned_to) = s1.i : c1.i;
     s1.state = IDLE & c2.state = REQUESTED & next(c2.assigned_to) = s1.i : c2.i;
+    s1.state = IDLE & c3.state = REQUESTED & next(c3.assigned_to) = s1.i : c3.i;
     s1.state = BUSY & s1.assigned_to != 0 : 0;
     TRUE : s1.assigned_to;
   esac;
   next(s2.assigned_to) := case
     s2.state = IDLE & c1.state = REQUESTED & next(c1.assigned_to) = s2.i : c1.i;
     s2.state = IDLE & c2.state = REQUESTED & next(c2.assigned_to) = s2.i : c2.i;
+    s2.state = IDLE & c3.state = REQUESTED & next(c3.assigned_to) = s2.i : c3.i;
     s2.state = BUSY & s2.assigned_to != 0 : 0;
     TRUE : s2.assigned_to;
+  esac;
+  next(s3.assigned_to) := case
+    s3.state = IDLE & c1.state = REQUESTED & next(c1.assigned_to) = s3.i : c1.i;
+    s3.state = IDLE & c2.state = REQUESTED & next(c2.assigned_to) = s3.i : c2.i;
+    s3.state = IDLE & c3.state = REQUESTED & next(c3.assigned_to) = s3.i : c3.i;
+    s3.state = BUSY & s3.assigned_to != 0 : 0;
+    TRUE : s3.assigned_to;
   esac;
 
 DEFINE
