@@ -3,11 +3,11 @@ import itertools
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 tables = 3     # N
-waiters = 3    # K
+waiters = 6    # K
 order_time = 2 # L
 wait_max = 5   # M
 busy_max = 5   # R
-relax_time = 1
+relax_time = 2
 
 def permutations(n):
     return list(itertools.product([True, False], repeat=n))

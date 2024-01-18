@@ -3,7 +3,7 @@ VAR
   state : { IDLE, REQUESTED, TALKING, ANGRY };
   wait : 0..max_wait;
   talking : 0..talking_amount;
-  assigned_to : 0..3;
+  assigned_to : 0..6;
 ASSIGN
   init(state) := IDLE;
   init(wait) := 0;
@@ -64,7 +64,7 @@ ASSIGN
 DEFINE
   max_busy := 5; -- R
   busy_amount := 2; -- L
-  relax_amount := 1;
+  relax_amount := 2;
 
 MODULE restaurant
 VAR
@@ -74,37 +74,61 @@ VAR
     s1 : server(1);
     s2 : server(2);
     s3 : server(3);
+    s4 : server(4);
+    s5 : server(5);
+    s6 : server(6);
 ASSIGN
     next(c1.assigned_to) := case
-          s1.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s1.i;
-          s1.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s1.i;
-          s1.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s1.i;
-          s1.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state != REQUESTED : s1.i;
-          s2.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s2.i;
-          s2.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s2.i;
-          s2.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s2.i;
-          s2.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state != REQUESTED : s2.i;
-          s3.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s3.i;
-          s3.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s3.i;
-          s3.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s3.i;
-          s3.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state != REQUESTED : s3.i;
+          s1.busy + s1.busy_amount < s1.max_busy & s1.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s1.i;
+          s1.busy + s1.busy_amount < s1.max_busy & s1.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s1.i;
+          s1.busy + s1.busy_amount < s1.max_busy & s1.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s1.i;
+          s1.busy + s1.busy_amount < s1.max_busy & s1.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state != REQUESTED : s1.i;
+          s2.busy + s2.busy_amount < s2.max_busy & s2.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s2.i;
+          s2.busy + s2.busy_amount < s2.max_busy & s2.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s2.i;
+          s2.busy + s2.busy_amount < s2.max_busy & s2.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s2.i;
+          s2.busy + s2.busy_amount < s2.max_busy & s2.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state != REQUESTED : s2.i;
+          s3.busy + s3.busy_amount < s3.max_busy & s3.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s3.i;
+          s3.busy + s3.busy_amount < s3.max_busy & s3.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s3.i;
+          s3.busy + s3.busy_amount < s3.max_busy & s3.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s3.i;
+          s3.busy + s3.busy_amount < s3.max_busy & s3.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state != REQUESTED : s3.i;
+          s4.busy + s4.busy_amount < s4.max_busy & s4.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s4.i;
+          s4.busy + s4.busy_amount < s4.max_busy & s4.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s4.i;
+          s4.busy + s4.busy_amount < s4.max_busy & s4.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s4.i;
+          s4.busy + s4.busy_amount < s4.max_busy & s4.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state != REQUESTED : s4.i;
+          s5.busy + s5.busy_amount < s5.max_busy & s5.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s5.i;
+          s5.busy + s5.busy_amount < s5.max_busy & s5.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s5.i;
+          s5.busy + s5.busy_amount < s5.max_busy & s5.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s5.i;
+          s5.busy + s5.busy_amount < s5.max_busy & s5.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state != REQUESTED : s5.i;
+          s6.busy + s6.busy_amount < s6.max_busy & s6.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s6.i;
+          s6.busy + s6.busy_amount < s6.max_busy & s6.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s6.i;
+          s6.busy + s6.busy_amount < s6.max_busy & s6.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s6.i;
+          s6.busy + s6.busy_amount < s6.max_busy & s6.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state != REQUESTED : s6.i;
       c1.state = TALKING & c1.assigned_to != 0 : 0;
       TRUE : c1.assigned_to;
     esac;
     next(c2.assigned_to) := case
-          s1.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s1.i;
-          s1.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s1.i;
-          s2.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s2.i;
-          s2.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s2.i;
-          s3.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s3.i;
-          s3.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s3.i;
+          s1.busy + s1.busy_amount < s1.max_busy & s1.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s1.i;
+          s1.busy + s1.busy_amount < s1.max_busy & s1.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s1.i;
+          s2.busy + s2.busy_amount < s2.max_busy & s2.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s2.i;
+          s2.busy + s2.busy_amount < s2.max_busy & s2.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s2.i;
+          s3.busy + s3.busy_amount < s3.max_busy & s3.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s3.i;
+          s3.busy + s3.busy_amount < s3.max_busy & s3.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s3.i;
+          s4.busy + s4.busy_amount < s4.max_busy & s4.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s4.i;
+          s4.busy + s4.busy_amount < s4.max_busy & s4.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s4.i;
+          s5.busy + s5.busy_amount < s5.max_busy & s5.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s5.i;
+          s5.busy + s5.busy_amount < s5.max_busy & s5.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s5.i;
+          s6.busy + s6.busy_amount < s6.max_busy & s6.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s6.i;
+          s6.busy + s6.busy_amount < s6.max_busy & s6.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s6.i;
       c2.state = TALKING & c2.assigned_to != 0 : 0;
       TRUE : c2.assigned_to;
     esac;
     next(c3.assigned_to) := case
-          s1.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s1.i;
-          s2.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s2.i;
-          s3.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s3.i;
+          s1.busy + s1.busy_amount < s1.max_busy & s1.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s1.i;
+          s2.busy + s2.busy_amount < s2.max_busy & s2.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s2.i;
+          s3.busy + s3.busy_amount < s3.max_busy & s3.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s3.i;
+          s4.busy + s4.busy_amount < s4.max_busy & s4.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s4.i;
+          s5.busy + s5.busy_amount < s5.max_busy & s5.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s5.i;
+          s6.busy + s6.busy_amount < s6.max_busy & s6.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s6.i;
       c3.state = TALKING & c3.assigned_to != 0 : 0;
       TRUE : c3.assigned_to;
     esac;
@@ -129,6 +153,27 @@ ASSIGN
       s3.state = BUSY & s3.assigned_to != 0 : 0;
       TRUE : s3.assigned_to;
     esac;
+    next(s4.assigned_to) := case
+        s4.state = IDLE & c1.state = REQUESTED & next(c1.assigned_to) = s4.i : c1.i;
+        s4.state = IDLE & c2.state = REQUESTED & next(c2.assigned_to) = s4.i : c2.i;
+        s4.state = IDLE & c3.state = REQUESTED & next(c3.assigned_to) = s4.i : c3.i;
+      s4.state = BUSY & s4.assigned_to != 0 : 0;
+      TRUE : s4.assigned_to;
+    esac;
+    next(s5.assigned_to) := case
+        s5.state = IDLE & c1.state = REQUESTED & next(c1.assigned_to) = s5.i : c1.i;
+        s5.state = IDLE & c2.state = REQUESTED & next(c2.assigned_to) = s5.i : c2.i;
+        s5.state = IDLE & c3.state = REQUESTED & next(c3.assigned_to) = s5.i : c3.i;
+      s5.state = BUSY & s5.assigned_to != 0 : 0;
+      TRUE : s5.assigned_to;
+    esac;
+    next(s6.assigned_to) := case
+        s6.state = IDLE & c1.state = REQUESTED & next(c1.assigned_to) = s6.i : c1.i;
+        s6.state = IDLE & c2.state = REQUESTED & next(c2.assigned_to) = s6.i : c2.i;
+        s6.state = IDLE & c3.state = REQUESTED & next(c3.assigned_to) = s6.i : c3.i;
+      s6.state = BUSY & s6.assigned_to != 0 : 0;
+      TRUE : s6.assigned_to;
+    esac;
 DEFINE
 
 MODULE main
@@ -140,3 +185,6 @@ VAR
     LTLSPEC G (r.s1.state != SICK);
     LTLSPEC G (r.s2.state != SICK);
     LTLSPEC G (r.s3.state != SICK);
+    LTLSPEC G (r.s4.state != SICK);
+    LTLSPEC G (r.s5.state != SICK);
+    LTLSPEC G (r.s6.state != SICK);

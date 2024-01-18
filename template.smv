@@ -80,7 +80,7 @@ ASSIGN
     next(c{{ ti }}.assigned_to) := case
       {%- for wi in range(1, waiters+1) %}
         {%- for cond in conds[ti-1] %}
-          s{{ wi }}.state = IDLE{% for part in cond %} & c{{ loop.index }}.state {{ "=" if part else "!=" }} REQUESTED{% endfor %} : s{{ wi }}.i;
+          s{{ wi }}.busy + s{{ wi }}.busy_amount < s{{ wi }}.max_busy & s{{ wi }}.state = IDLE{% for part in cond %} & c{{ loop.index }}.state {{ "=" if part else "!=" }} REQUESTED{% endfor %} : s{{ wi }}.i;
         {%- endfor %}
       {%- endfor %}
       c{{ ti }}.state = TALKING & c{{ ti }}.assigned_to != 0 : 0;
