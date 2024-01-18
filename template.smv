@@ -1,0 +1,112 @@
+MODULE client (i)
+VAR
+  state : { IDLE, REQUESTED, TALKING, ANGRY };
+  wait : 0..max_wait;
+  talking : 0..talking_amount;
+  assigned_to : 0..{{ waiters }};
+ASSIGN
+  init(state) := IDLE;
+  init(wait) := 0;
+  init(assigned_to) := 0;
+  init(talking) := 0;
+
+  next(wait) := case
+    state = REQUESTED & wait < max_wait & assigned_to = 0 : wait + 1;
+    TRUE : 0;
+  esac;
+
+  next(talking) := case
+    state = TALKING & talking < talking_amount : talking + 1;
+    TRUE : 0;
+  esac;
+
+  next(state) := case
+    state = REQUESTED & assigned_to != 0 : TALKING;
+    state = REQUESTED & wait = max_wait & next(assigned_to) = 0 : ANGRY;
+    state = TALKING & talking = talking_amount : IDLE;
+    state = IDLE : { IDLE, REQUESTED };
+    TRUE : state;
+  esac;
+DEFINE
+  max_wait := {{ wait_max }}; -- K
+  talking_amount := {{ order_time }}; -- L
+
+MODULE server (i)
+VAR
+  state : { IDLE, BUSY, SICK };
+  busy : 0..max_busy;
+  relax : 0..relax_amount;
+  assigned_to : 0..{{ tables }};
+ASSIGN
+  init(state) := IDLE;
+  init(busy) := 0;
+  init(assigned_to) := 0;
+  init(relax) := 0;
+
+  next(busy) := case
+    state = BUSY & busy < max_busy : busy + 1;
+    state = IDLE & relax = relax_amount : 0;
+    TRUE : busy;
+  esac;
+
+  next(state) := case
+    state = IDLE & assigned_to != 0 : BUSY;
+    state = BUSY & busy = busy_amount : IDLE;
+    state = BUSY & busy = max_busy : SICK;
+    TRUE : state;
+  esac;
+
+  next(relax) := case
+    state = IDLE & relax < relax_amount : relax + 1;
+    state = BUSY : 0;
+    TRUE : relax;
+  esac;
+DEFINE
+  max_busy := {{ busy_max }}; -- R
+  busy_amount := {{ order_time }}; -- L
+  relax_amount := {{ relax_time }};
+
+MODULE restaurant
+VAR
+  {%- for ti in range(1, tables+1) %}
+    c{{ ti }} : client({{ ti }});
+  {%- endfor %}
+
+  {%- for wi in range(1, waiters+1) %}
+    s{{ wi }} : server({{ wi }});
+  {%- endfor %}
+ASSIGN
+  {%- for ti in range(1, tables+1) %}
+    next(c{{ ti }}.assigned_to) := case
+      {%- for wi in range(1, waiters+1) %}
+        {%- for cond in conds[ti-1] %}
+          s{{ wi }}.state = IDLE{% for part in cond %} & c{{ loop.index }}.state {{ "=" if part else "!=" }} REQUESTED{% endfor %} : s{{ wi }}.i;
+        {%- endfor %}
+      {%- endfor %}
+      c{{ ti }}.state = TALKING & c{{ ti }}.assigned_to != 0 : 0;
+      TRUE : c{{ ti }}.assigned_to;
+    esac;
+  {%- endfor %}
+
+  {%- for wi in range(1, waiters+1) %}
+    next(s{{ wi }}.assigned_to) := case
+      {%- for ti in range(1, tables+1) %}
+        s{{ wi }}.state = IDLE & c{{ ti }}.state = REQUESTED & next(c{{ ti }}.assigned_to) = s{{ wi }}.i : c{{ ti }}.i; 
+      {%- endfor %}
+      s{{ wi }}.state = BUSY & s{{ wi }}.assigned_to != 0 : 0;
+      TRUE : s{{ wi }}.assigned_to;
+    esac;
+  {%- endfor %}
+DEFINE
+
+MODULE main
+VAR
+  r : restaurant;
+
+  {%- for ti in range(1, tables+1) %}
+    LTLSPEC G (r.c{{ ti }}.state != ANGRY);
+  {%- endfor %}
+
+  {%- for wi in range(1, waiters+1) %}
+    LTLSPEC G (r.s{{ wi }}.state != SICK);
+  {%- endfor %}

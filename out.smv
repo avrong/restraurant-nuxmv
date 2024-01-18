@@ -1,0 +1,142 @@
+MODULE client (i)
+VAR
+  state : { IDLE, REQUESTED, TALKING, ANGRY };
+  wait : 0..max_wait;
+  talking : 0..talking_amount;
+  assigned_to : 0..3;
+ASSIGN
+  init(state) := IDLE;
+  init(wait) := 0;
+  init(assigned_to) := 0;
+  init(talking) := 0;
+
+  next(wait) := case
+    state = REQUESTED & wait < max_wait & assigned_to = 0 : wait + 1;
+    TRUE : 0;
+  esac;
+
+  next(talking) := case
+    state = TALKING & talking < talking_amount : talking + 1;
+    TRUE : 0;
+  esac;
+
+  next(state) := case
+    state = REQUESTED & assigned_to != 0 : TALKING;
+    state = REQUESTED & wait = max_wait & next(assigned_to) = 0 : ANGRY;
+    state = TALKING & talking = talking_amount : IDLE;
+    state = IDLE : { IDLE, REQUESTED };
+    TRUE : state;
+  esac;
+DEFINE
+  max_wait := 5; -- K
+  talking_amount := 2; -- L
+
+MODULE server (i)
+VAR
+  state : { IDLE, BUSY, SICK };
+  busy : 0..max_busy;
+  relax : 0..relax_amount;
+  assigned_to : 0..3;
+ASSIGN
+  init(state) := IDLE;
+  init(busy) := 0;
+  init(assigned_to) := 0;
+  init(relax) := 0;
+
+  next(busy) := case
+    state = BUSY & busy < max_busy : busy + 1;
+    state = IDLE & relax = relax_amount : 0;
+    TRUE : busy;
+  esac;
+
+  next(state) := case
+    state = IDLE & assigned_to != 0 : BUSY;
+    state = BUSY & busy = busy_amount : IDLE;
+    state = BUSY & busy = max_busy : SICK;
+    TRUE : state;
+  esac;
+
+  next(relax) := case
+    state = IDLE & relax < relax_amount : relax + 1;
+    state = BUSY : 0;
+    TRUE : relax;
+  esac;
+DEFINE
+  max_busy := 5; -- R
+  busy_amount := 2; -- L
+  relax_amount := 1;
+
+MODULE restaurant
+VAR
+    c1 : client(1);
+    c2 : client(2);
+    c3 : client(3);
+    s1 : server(1);
+    s2 : server(2);
+    s3 : server(3);
+ASSIGN
+    next(c1.assigned_to) := case
+          s1.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s1.i;
+          s1.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s1.i;
+          s1.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s1.i;
+          s1.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state != REQUESTED : s1.i;
+          s2.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s2.i;
+          s2.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s2.i;
+          s2.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s2.i;
+          s2.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state != REQUESTED : s2.i;
+          s3.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s3.i;
+          s3.state = IDLE & c1.state = REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s3.i;
+          s3.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s3.i;
+          s3.state = IDLE & c1.state = REQUESTED & c2.state != REQUESTED & c3.state != REQUESTED : s3.i;
+      c1.state = TALKING & c1.assigned_to != 0 : 0;
+      TRUE : c1.assigned_to;
+    esac;
+    next(c2.assigned_to) := case
+          s1.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s1.i;
+          s1.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s1.i;
+          s2.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s2.i;
+          s2.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s2.i;
+          s3.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state = REQUESTED : s3.i;
+          s3.state = IDLE & c1.state != REQUESTED & c2.state = REQUESTED & c3.state != REQUESTED : s3.i;
+      c2.state = TALKING & c2.assigned_to != 0 : 0;
+      TRUE : c2.assigned_to;
+    esac;
+    next(c3.assigned_to) := case
+          s1.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s1.i;
+          s2.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s2.i;
+          s3.state = IDLE & c1.state != REQUESTED & c2.state != REQUESTED & c3.state = REQUESTED : s3.i;
+      c3.state = TALKING & c3.assigned_to != 0 : 0;
+      TRUE : c3.assigned_to;
+    esac;
+    next(s1.assigned_to) := case
+        s1.state = IDLE & c1.state = REQUESTED & next(c1.assigned_to) = s1.i : c1.i;
+        s1.state = IDLE & c2.state = REQUESTED & next(c2.assigned_to) = s1.i : c2.i;
+        s1.state = IDLE & c3.state = REQUESTED & next(c3.assigned_to) = s1.i : c3.i;
+      s1.state = BUSY & s1.assigned_to != 0 : 0;
+      TRUE : s1.assigned_to;
+    esac;
+    next(s2.assigned_to) := case
+        s2.state = IDLE & c1.state = REQUESTED & next(c1.assigned_to) = s2.i : c1.i;
+        s2.state = IDLE & c2.state = REQUESTED & next(c2.assigned_to) = s2.i : c2.i;
+        s2.state = IDLE & c3.state = REQUESTED & next(c3.assigned_to) = s2.i : c3.i;
+      s2.state = BUSY & s2.assigned_to != 0 : 0;
+      TRUE : s2.assigned_to;
+    esac;
+    next(s3.assigned_to) := case
+        s3.state = IDLE & c1.state = REQUESTED & next(c1.assigned_to) = s3.i : c1.i;
+        s3.state = IDLE & c2.state = REQUESTED & next(c2.assigned_to) = s3.i : c2.i;
+        s3.state = IDLE & c3.state = REQUESTED & next(c3.assigned_to) = s3.i : c3.i;
+      s3.state = BUSY & s3.assigned_to != 0 : 0;
+      TRUE : s3.assigned_to;
+    esac;
+DEFINE
+
+MODULE main
+VAR
+  r : restaurant;
+    LTLSPEC G (r.c1.state != ANGRY);
+    LTLSPEC G (r.c2.state != ANGRY);
+    LTLSPEC G (r.c3.state != ANGRY);
+    LTLSPEC G (r.s1.state != SICK);
+    LTLSPEC G (r.s2.state != SICK);
+    LTLSPEC G (r.s3.state != SICK);
