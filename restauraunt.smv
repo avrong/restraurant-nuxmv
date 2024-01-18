@@ -11,7 +11,7 @@ ASSIGN
   init(talking) := 0;
 
   next(wait) := case
-    state = REQUESTED & wait < max_wait : wait + 1;
+    state = REQUESTED & wait < max_wait & assigned_to = 0 : wait + 1;
     TRUE : 0;
   esac;
 
