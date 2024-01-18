@@ -29,7 +29,7 @@ ASSIGN
   esac;
 DEFINE
   max_wait := 5; -- K
-  talking_amount := 3; -- L
+  talking_amount := 2; -- L
 
 MODULE server (i)
 VAR
@@ -63,8 +63,8 @@ ASSIGN
   esac;
 DEFINE
   max_busy := 5; -- R
-  busy_amount := 3; -- L
-  relax_amount := 2;
+  busy_amount := 2; -- L
+  relax_amount := 1;
 
 MODULE restaurant
 VAR
@@ -77,15 +77,27 @@ VAR
 ASSIGN
   next(c1.assigned_to) := case
     c1.state = REQUESTED & s1.state = IDLE & c2.state != REQUESTED & c3.state != REQUESTED : s1.i;
-    c1.state = REQUESTED & s2.state = IDLE & c2.state != REQUESTED & c3.state != REQUESTED : s2.i;
+    c1.state = REQUESTED & s1.state = IDLE & c2.state != REQUESTED & c3.state = REQUESTED : s1.i;
+    c1.state = REQUESTED & s1.state = IDLE & c2.state = REQUESTED & c3.state != REQUESTED : s1.i;
+    c1.state = REQUESTED & s1.state = IDLE & c2.state != REQUESTED & c3.state != REQUESTED : s1.i;
+    c1.state = REQUESTED & s2.state = IDLE & c2.state = REQUESTED & c3.state = REQUESTED : s2.i;
+    c1.state = REQUESTED & s2.state = IDLE & c2.state != REQUESTED & c3.state = REQUESTED : s2.i;
+    c1.state = REQUESTED & s2.state = IDLE & c2.state = REQUESTED & c3.state != REQUESTED : s2.i;
+    c1.state = REQUESTED & s2.state = IDLE & c2.state = REQUESTED & c3.state = REQUESTED : s2.i;
     c1.state = REQUESTED & s3.state = IDLE & c2.state != REQUESTED & c3.state != REQUESTED : s3.i;
+    c1.state = REQUESTED & s3.state = IDLE & c2.state != REQUESTED & c3.state = REQUESTED : s3.i;
+    c1.state = REQUESTED & s3.state = IDLE & c2.state = REQUESTED & c3.state != REQUESTED : s3.i;
+    c1.state = REQUESTED & s3.state = IDLE & c2.state = REQUESTED & c3.state = REQUESTED : s3.i;
     c1.state = TALKING & c1.assigned_to != 0 : 0;
     TRUE : c1.assigned_to;
   esac;
   next(c2.assigned_to) := case
     c2.state = REQUESTED & s1.state = IDLE & c1.state != REQUESTED & c3.state != REQUESTED : s1.i;
+    c2.state = REQUESTED & s1.state = IDLE & c1.state != REQUESTED & c3.state = REQUESTED : s1.i;
     c2.state = REQUESTED & s2.state = IDLE & c1.state != REQUESTED & c3.state != REQUESTED : s2.i;
+    c2.state = REQUESTED & s2.state = IDLE & c1.state != REQUESTED & c3.state = REQUESTED : s2.i;
     c3.state = REQUESTED & s3.state = IDLE & c1.state != REQUESTED & c3.state != REQUESTED : s3.i;
+    c2.state = REQUESTED & s3.state = IDLE & c1.state != REQUESTED & c3.state = REQUESTED : s3.i;
     c2.state = TALKING & c2.assigned_to != 0 : 0;
     TRUE : c2.assigned_to;
   esac;
@@ -126,3 +138,7 @@ VAR
   r : restaurant;
 
   LTLSPEC G (r.c1.state != ANGRY);
+  LTLSPEC G (r.c2.state != ANGRY);
+
+  LTLSPEC G (r.s1.state != SICK);
+  LTLSPEC G (r.s2.state != SICK);
