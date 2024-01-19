@@ -139,6 +139,8 @@ VAR
 
   LTLSPEC G (r.c1.state != ANGRY);
   LTLSPEC G (r.c2.state != ANGRY);
+  LTLSPEC G (r.c3.state != ANGRY);
 
   LTLSPEC G (r.s1.state != SICK);
   LTLSPEC G (r.s2.state != SICK);
+  LTLSPEC G (r.s3.state != SICK);
